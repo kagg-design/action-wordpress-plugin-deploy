@@ -46,16 +46,20 @@ if [[ -z "$ASSETS_DIR" ]]; then
 fi
 echo "ℹ︎ ASSETS_DIR is $ASSETS_DIR"
 
-SVN_URL="https://plugins.svn.wordpress.org/${SLUG}/"
+if [[ -z "$SVN_SERVER" ]]; then
+	SVN_SERVER="https://plugins.svn.wordpress.org"
+fi
+SVN_URL="${SVN_SERVER}/${SLUG}/"
+
 SVN_DIR="/github/svn-${SLUG}"
 
 # Checkout just trunk and assets for efficiency
 # Tagging will be handled on the SVN level
 echo "➤ Checking out .org repository..."
-svn checkout --depth immediates "$SVN_URL" "$SVN_DIR"
+svn checkout --depth immediates "$SVN_URL" "$SVN_DIR" --username "$SVN_USERNAME" --password "$SVN_PASSWORD"
 cd "$SVN_DIR"
-svn update --set-depth infinity assets
-svn update --set-depth infinity trunk
+svn update --set-depth infinity assets --username "$SVN_USERNAME" --password "$SVN_PASSWORD"
+svn update --set-depth infinity trunk --username "$SVN_USERNAME" --password "$SVN_PASSWORD"
 
 echo "➤ Copying files..."
 if [[ -e "$GITHUB_WORKSPACE/.distignore" ]]; then
@@ -129,7 +133,7 @@ svn propset svn:mime-type image/jpeg assets/*.jpg || true
 svn status
 
 echo "➤ Committing files..."
-svn commit -m "Update to version $VERSION from GitHub" --no-auth-cache --non-interactive  --username "$SVN_USERNAME" --password "$SVN_PASSWORD"
+svn commit -m "Update to version $VERSION from GitHub" --no-auth-cache --non-interactive --username "$SVN_USERNAME" --password "$SVN_PASSWORD"
 
 if ! $GENERATE_ZIP; then
   echo "Generating zip file..."
